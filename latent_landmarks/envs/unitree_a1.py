@@ -167,9 +167,9 @@ class A1Env(MujocoEnv, utils.EzPickle):
 
         if self._use_contact_forces:
             contact_force = self.contact_forces.flat.copy()
-            return np.concatenate((position, velocity, contact_force))
+            return np.concatenate((position, velocity, contact_force)).astype(np.float32)
         else:
-            return np.concatenate((position, velocity))
+            return np.concatenate((position, velocity)).astype(np.float32)
 
     def reset_model(self):
         noise_low = -self._reset_noise_scale

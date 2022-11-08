@@ -76,10 +76,10 @@ class GoalA1Env(MujocoEnv, utils.EzPickle):
 
 
         base_observation_space = Box(
-            low=-np.inf, high=np.inf, shape=(obs_shape,), dtype=np.float64
+            low=-np.inf, high=np.inf, shape=(obs_shape,), dtype=np.float32
         )
         goal_dim = 12 # number of joint pos DOFs
-        goal_space = spaces.Box(-np.inf, np.inf, shape=(goal_dim,))
+        goal_space = spaces.Box(-np.inf, np.inf, shape=(goal_dim,), dtype=np.float32)
         observation_space = spaces.Dict({
             'observation': base_observation_space,
             'desired_goal': goal_space,
@@ -191,9 +191,9 @@ class GoalA1Env(MujocoEnv, utils.EzPickle):
 
         current_joint_pos = self.get_joint_pos()
         return {
-            'observation': observation, 
-            'desired_goal': self.desired_joint_pos, 
-            'achieved_goal': current_joint_pos 
+            'observation': observation.astype(np.float32), 
+            'desired_goal': self.desired_joint_pos.astype(np.float32), 
+            'achieved_goal': current_joint_pos.astype(np.float32) 
         }
 
     def reset_model(self):
