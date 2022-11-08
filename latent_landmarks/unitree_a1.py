@@ -10,7 +10,7 @@ DEFAULT_CAMERA_CONFIG = {
 }
 
 current_dir = pathlib.Path(__file__).absolute().parent
-xml_path = str(current_dir / 'unitree_a1' / 'a1.xml')
+xml_path = str(current_dir / 'unitree_a1' / 'scene.xml')
 
 class A1Env(MujocoEnv, utils.EzPickle):
     metadata = {
