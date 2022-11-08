@@ -1,4 +1,4 @@
-from latent_landmarks.unitree_a1 import A1Env
+from latent_landmarks.envs.unitree_a1 import A1Env
 
 def test_reset():
     env = A1Env()
