@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "latent-landmarks"
+version = "0.1.0"
+description = ""
+authors = ["Daniel Tan <dtch1997@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "latent_landmarks"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+mujoco = "^2.3.0"
+gymnasium = "^0.26.3"
+imageio = "^2.22.4"
+mujoco-py = "^2.1.2.14"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
