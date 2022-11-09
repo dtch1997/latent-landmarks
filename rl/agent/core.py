@@ -73,33 +73,43 @@ class DoubleQfunc(nn.Module):
 class Actor(nn.Module):
     def __init__(self, env_params, args):
         super().__init__()
-        self.act_limit = env_params['action_max']
-        
+        self.act_max = torch.from_numpy(env_params['action_max'])
+        self.act_min = torch.from_numpy(env_params['action_min'])
+
         input_dim = env_params['obs'] + env_params['goal']
         self.net = net_utils.mlp(
             [input_dim] + [args.hid_size] * args.n_hids,
             activation=args.activ, output_activation=args.activ)
         self.mean = nn.Linear(args.hid_size, env_params['action'])
     
+    def denormalize(self, x):
+        """ Denormalize tensor from [-1, 1] to [act_min, act_max] """
+        return x * (self.act_max - self.act_min / 2) + (self.act_max + self.act_min) / 2
+
     def forward(self, inputs):
         outputs = self.net(inputs)
         mean = self.mean(outputs)
-        pi_action = torch.tanh(mean) * self.act_limit
+        pi_action = self.denormalize(torch.tanh(mean))
         return pi_action
 
 
 class Critic(nn.Module):
     def __init__(self, env_params, args):
         super().__init__()
-        self.act_limit = env_params['action_max']
+        self.act_max = torch.from_numpy(env_params['action_max'])
+        self.act_min = torch.from_numpy(env_params['action_min'])
         
         input_dim = env_params['obs'] + env_params['goal'] + env_params['action']
         self.net = net_utils.mlp(
             [input_dim] + [args.hid_size] * args.n_hids + [1],
             activation=args.activ)
+
+    def normalize(self, x):
+        """ Normalize tensor from [act_min, act_max] to [-1, 1] """
+        return (x - ((self.act_max + self.act_min) / 2)) / (self.act_max - self.act_min / 2)
     
     def forward(self, pi_inputs, actions):
-        q_inputs = torch.cat([pi_inputs, actions / self.act_limit], dim=-1)
+        q_inputs = torch.cat([pi_inputs, self.normalize(actions)], dim=-1)
         q_values = self.net(q_inputs).squeeze()
         return q_values
 

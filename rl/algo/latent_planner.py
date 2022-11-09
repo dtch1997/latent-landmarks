@@ -77,7 +77,7 @@ class Algo(BaseAlgo):
     def collect_experience(self, act_randomly=False, train_agent=True):
         ob_list, ag_list, bg_list, a_list = [], [], [], []
         seed = self.env_params['reset_seed']
-        observation, info = self.env.reset(seed)
+        observation, info = self.env.reset(seed=seed)
         ob = observation['observation']
         ag = observation['achieved_goal']
         bg = observation['desired_goal']
@@ -192,7 +192,7 @@ class Algo(BaseAlgo):
         total_trial_count = 0
         for n_test in range(self.args.n_test_rollouts):
             seed = self.env_params['reset_seed']
-            observation, info = env.reset(seed)
+            observation, info = env.reset(seed=seed)
             ob = observation['observation']
             bg = observation['desired_goal']
             ag = observation['achieved_goal']
@@ -233,7 +233,7 @@ class Algo(BaseAlgo):
         total_trial_count = 0
         for n_test in range(self.args.n_test_rollouts):
             seed = self.env_params['reset_seed']
-            observation, info = env.reset(seed)
+            observation, info = env.reset(seed=seed)
             ob = observation['observation']
             bg = observation['desired_goal']
             ag = observation['achieved_goal']
