@@ -13,14 +13,25 @@ class GoalWrapper(gym.Wrapper):
         ob_space = env.observation_space
         goal_space = env.action_space
 
-        self.goal_space = env.action_space
+        self.goal_space = spaces.Box(
+            env.action_space.low, 
+            env.action_space.high,
+            env.action_space.shape, 
+            dtype=np.float64
+        )
+        self.joint_space = spaces.Box(
+            -np.inf, 
+            np.inf, 
+            env.action_space.shape,
+            dtype=np.float64   
+        )
         self.goal_dim = goal_space.shape[0]
         self.distance_threshold = distance_threshold 
         
         self.observation_space = spaces.Dict(OrderedDict({
             'observation': ob_space,
             'desired_goal': self.goal_space,
-            'achieved_goal': self.goal_space,
+            'achieved_goal': self.joint_space,
         }))
         self.goal = None
         self.random_start = random_start
@@ -31,6 +42,9 @@ class GoalWrapper(gym.Wrapper):
         out = {'observation': observation,
                'desired_goal': self.goal,
                'achieved_goal': achieved_goal }
+        assert observation in self.env.observation_space
+        assert self.goal in self.goal_space 
+        assert achieved_goal in self.joint_space
         goal_distance = np.linalg.norm(achieved_goal - self.goal, axis=-1)
         info['is_success'] = (goal_distance < self.distance_threshold)
         reward = self.compute_rew(achieved_goal, self.goal)
@@ -39,7 +53,6 @@ class GoalWrapper(gym.Wrapper):
     def reset(self, **kwargs):
         observation, info = self.env.reset(**kwargs)
         self.goal = self.goal_space.sample()
-        
 
         achieved_goal = self.unwrapped.get_joint_pos()
         goal_distance = np.linalg.norm(achieved_goal - self.goal, axis=-1)
@@ -51,7 +64,10 @@ class GoalWrapper(gym.Wrapper):
         if self.random_start:
             raise NotImplementedError
         
-        out = dict(observation=observation, desired_goal=self.goal, achieved_goal=self.unwrapped.get_joint_pos())
+        achieved_goal = self.unwrapped.get_joint_pos()
+        out = {'observation': observation,
+               'desired_goal': self.goal,
+               'achieved_goal': achieved_goal }
         return out, info
     
     def compute_rew(self, state, goal):
