@@ -197,11 +197,12 @@ class TensorBoardOutputFormat(KVWriter):
             kwargs = {'tag': k, 'simple_value': float(v)}
             return self.tf.Summary.Value(**kwargs)
         
+        writer = self.tf.summary.create_file_writer('')
         summary = self.tf.Summary(value=[summary_val(k, v) for k, v in kvs.items()])
         event = self.event_pb2.Event(wall_time=time.time(), summary=summary)
         event.step = self.step  # is there any reason why you'd want to specify the step?
         self.writer.WriteEvent(event)
-        self.writer.Flush()
+        self.writer.flush()
         self.step += 1
     
     def close(self):

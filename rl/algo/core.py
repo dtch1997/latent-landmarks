@@ -55,7 +55,7 @@ class BaseAlgo:
         self.model_path = osp.join(self.log_path, 'state')
         if mpi_utils.is_root() and not args.play:
             os.makedirs(self.model_path, exist_ok=True)
-            logger.configure(dir=self.log_path, format_strs=["csv", "stdout", "tensorboard"])
+            logger.configure(dir=self.log_path, format_strs=["csv", "stdout"])
             config_list = [env_params.copy(), args.__dict__.copy(), {'NUM_MPI': mpi_utils.get_size()}]
             log_config(config=merge_configs(config_list), output_dir=self.log_path)
     
