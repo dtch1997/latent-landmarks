@@ -73,7 +73,7 @@ class Learner:
         a = self.agent.to_tensor(a)
         
         q_pi, pi = self.agent.forward(o, bg)
-        action_l2 = (pi / self.agent.actor.act_limit).pow(2).mean()
+        action_l2 = (pi / self.agent.actor.act_range).pow(2).mean()
         loss_actor = (- q_pi).mean() + self.args.action_l2 * action_l2
         
         pi_future = self.agent.get_pis(o, future_ag)

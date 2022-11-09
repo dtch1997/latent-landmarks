@@ -12,64 +12,6 @@ from rl.agent.normalizer import Normalizer
 LOG_STD_MAX = 2
 LOG_STD_MIN = -20
 
-
-class StochasticActor(nn.Module):
-    def __init__(self, env_params, args):
-        super().__init__()
-        self.act_limit = env_params['action_max']
-        
-        input_dim = env_params['obs'] + env_params['goal']
-        self.net = net_utils.mlp(
-            [input_dim] + [args.hid_size] * args.n_hids,
-            activation=args.activ, output_activation=args.activ)
-        self.mean = nn.Linear(args.hid_size, env_params['action'])
-        self.logstd = nn.Linear(args.hid_size, env_params['action'])
-    
-    def gaussian_params(self, inputs):
-        outputs = self.net(inputs)
-        mean, logstd = self.mean(outputs), self.logstd(outputs)
-        logstd = torch.clamp(logstd, LOG_STD_MIN, LOG_STD_MAX)
-        std = torch.exp(logstd)
-        return mean, std
-    
-    def forward(self, inputs, deterministic=False, with_logprob=True):
-        mean, std = self.gaussian_params(inputs)
-        pi_dist = Normal(mean, std)
-        if deterministic:
-            pi_action = mean
-        else:
-            pi_action = pi_dist.rsample()
-        logp_pi = None
-        if with_logprob:
-            logp_pi = pi_dist.log_prob(pi_action).sum(axis=-1)
-            logp_pi -= (2 * (np.log(2) - pi_action - F.softplus(-2 * pi_action))).sum(axis=-1)
-        pi_action = torch.tanh(pi_action) * self.act_limit
-        return pi_action, logp_pi
-
-
-class Qfunc(nn.Module):
-    def __init__(self, env_params, args):
-        super().__init__()
-        input_dim = env_params['obs'] + env_params['goal'] + env_params['action']
-        self.q_func = net_utils.mlp([input_dim] + [args.hid_size] * args.n_hids + [1], activation=args.activ)
-    
-    def forward(self, *args):
-        q_value = self.q_func(torch.cat([*args], dim=-1))
-        return torch.squeeze(q_value, -1)
-
-
-class DoubleQfunc(nn.Module):
-    def __init__(self, env_params, args):
-        super().__init__()
-        self.q1 = Qfunc(env_params, args)
-        self.q2 = Qfunc(env_params, args)
-    
-    def forward(self, *args):
-        q1 = self.q1(*args)
-        q2 = self.q2(*args)
-        return q1, q2
-
-
 class Actor(nn.Module):
     def __init__(self, env_params, args):
         super().__init__()
@@ -82,6 +24,10 @@ class Actor(nn.Module):
             activation=args.activ, output_activation=args.activ)
         self.mean = nn.Linear(args.hid_size, env_params['action'])
     
+    @property 
+    def act_range(self):
+        return (self.act_max - self.act_min)
+
     def denormalize(self, x):
         """ Denormalize tensor from [-1, 1] to [act_min, act_max] """
         return x * (self.act_max - self.act_min / 2) + (self.act_max + self.act_min) / 2
