@@ -23,7 +23,8 @@ def get_env_params(env):
     obs, info = env.reset()
     params = {'obs': obs['observation'].shape[0], 'goal': obs['desired_goal'].shape[0],
               'action': env.action_space.shape[0],
-              'action_max': env.action_space.high[0],  # env.action_space.high[0],
+              'action_max': env.action_space.high,  
+              'action_min': env.action_space.low,
               'max_timesteps': env._max_episode_steps}
     return params
 
@@ -56,6 +57,7 @@ def launch(args):
         torch.cuda.manual_seed(seed)
     
     env_params = get_env_params(env)
+    env_params['reset_seed'] = seed
     
     def compute_reward(state, goal, info):
         assert state.shape == goal.shape

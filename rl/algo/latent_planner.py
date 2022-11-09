@@ -38,19 +38,19 @@ class Algo(BaseAlgo):
         replay_big_enough = self.replay.current_size > self.args.start_planning_n_traj
         return replay_big_enough
     
-    def get_actions(self, ob, bg, a_max=1.0, act_randomly=False):
+    def get_actions(self, ob, bg, a_min=-1.0, a_max=1.0, act_randomly=False):
         act = self.agent.get_actions(ob, bg)
         if self.args.noise_eps > 0.0:
-            act += self.args.noise_eps * a_max * np.random.randn(*act.shape)
-            act = np.clip(act, -a_max, a_max)
+            act += self.args.noise_eps * ((a_max-a_min) / 2) * np.random.randn(*act.shape)
+            act = np.clip(act, a_min, a_max)
         if self.args.random_eps > 0.0:
-            a_rand = np.random.uniform(low=-a_max, high=a_max, size=act.shape)
+            a_rand = np.random.uniform(low=a_min, high=a_max, size=act.shape)
             mask = np.random.binomial(1, self.args.random_eps, self.num_envs)
             if self.num_envs > 1:
                 mask = np.expand_dims(mask, -1)
             act += mask * (a_rand - act)
         if act_randomly:
-            act = np.random.uniform(low=-a_max, high=a_max, size=act.shape)
+            act = np.random.uniform(low=a_min, high=a_max, size=act.shape)
         return act
     
     def agent_optimize(self):
@@ -76,19 +76,21 @@ class Algo(BaseAlgo):
     
     def collect_experience(self, act_randomly=False, train_agent=True):
         ob_list, ag_list, bg_list, a_list = [], [], [], []
-        observation, info = self.env.reset()
+        seed = self.env_params['reset_seed']
+        observation, info = self.env.reset(seed)
         ob = observation['observation']
         ag = observation['achieved_goal']
         bg = observation['desired_goal']
         ag_origin = ag.copy()
         a_max = self.env_params['action_max']
+        a_min = self.env_params['action_min']
         self.planner.reset()
         can_plan = self.can_plan()
         if not act_randomly and can_plan:
             self.planner.update(goals=bg.copy(), test_time=False)
         
         for timestep in range(self.env_params['max_timesteps']):
-            act = self.get_actions(ob, bg, a_max=a_max, act_randomly=act_randomly)
+            act = self.get_actions(ob, bg, a_min=a_min, a_max=a_max, act_randomly=act_randomly)
             if not act_randomly and can_plan and np.random.uniform() < self.args.plan_eps:
                 sub_goals = self.planner.get_subgoals(ob, bg.copy())
                 act = self.agent.get_actions(ob, sub_goals)
@@ -189,8 +191,8 @@ class Algo(BaseAlgo):
         total_success_count = 0
         total_trial_count = 0
         for n_test in range(self.args.n_test_rollouts):
-            info = None
-            observation = env.reset()
+            seed = self.env_params['reset_seed']
+            observation, info = env.reset(seed)
             ob = observation['observation']
             bg = observation['desired_goal']
             ag = observation['achieved_goal']
@@ -230,8 +232,8 @@ class Algo(BaseAlgo):
         total_success_count = 0
         total_trial_count = 0
         for n_test in range(self.args.n_test_rollouts):
-            info = None
-            observation = env.reset()
+            seed = self.env_params['reset_seed']
+            observation, info = env.reset(seed)
             ob = observation['observation']
             bg = observation['desired_goal']
             ag = observation['achieved_goal']
