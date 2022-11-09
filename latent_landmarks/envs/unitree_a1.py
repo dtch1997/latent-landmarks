@@ -195,3 +195,11 @@ class A1Env(MujocoEnv, utils.EzPickle):
                 getattr(self.viewer.cam, key)[:] = value
             else:
                 setattr(self.viewer.cam, key, value)
+
+    def get_joint_pos(self):
+        start_pos = 7 # 3-dim base pos and 4-dim base orn
+        if self._exclude_current_positions_from_observation:
+            start_pos = start_pos - 2
+        num_joints = self.action_space.shape[0]
+        position = self.data.qpos.flat.copy()
+        return position[start_pos : start_pos + num_joints]
