@@ -1,10 +1,11 @@
-from latent_landmarks.envs.unitree_a1 import A1Env
+import latent_landmarks.envs
+import gymnasium as gym
 
 def test_reset():
-    env = A1Env()
+    env = gym.make("A1-v1")
     env.reset(seed=42)
 
 def test_obs_space():
-    env = A1Env()
+    env = gym.make("A1-v1")
     observation, info = env.reset(seed=42)
     assert observation.shape == (35,)
